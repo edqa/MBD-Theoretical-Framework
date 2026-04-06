@@ -19,6 +19,7 @@ setup(
         "console_scripts": [
             "mbd-compute=mbd_framework.compute_volumes:main",
             "mbd-crystal=mbd_framework.crystal_validation:main",
+            "mbd-sers=mbd_framework.sers_unification:main",
         ],
     },
     classifiers=[

@@ -5,6 +5,7 @@ mbd_framework/__init__.py
 mbd_framework/compute_volumes.py
 mbd_framework/crystal_validation.py
 mbd_framework/screened_mbd.py
+mbd_framework/sers_unification.py
 mbd_framework.egg-info/PKG-INFO
 mbd_framework.egg-info/SOURCES.txt
 mbd_framework.egg-info/dependency_links.txt
