@@ -110,9 +110,9 @@ def main():
     parser.add_argument("--target", type=str, default="Benzene", help="Target Molecule to compute (Benzene, Naphthalene, Ice)")
     args = parser.parse_args()
 
-    db_path = os.path.join(os.path.dirname(__file__), "database.json")
+    db_path = os.path.join(os.getcwd(), "database.json")
     if not os.path.exists(db_path):
-        print("Database not found! Run compute_volumes.py first.")
+        print(f"Database not found at {db_path}! Run mbd-compute first.")
         return
         
     with open(db_path, "r") as f:

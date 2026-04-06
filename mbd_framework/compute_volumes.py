@@ -128,7 +128,7 @@ def main():
         data = compute_molecule(name, geo, basis=b)
         results[name] = data
 
-    db_path = os.path.join(os.path.dirname(__file__), "database.json")
+    db_path = os.path.join(os.getcwd(), "database.json")
     with open(db_path, "w") as f:
         json.dump(results, f, indent=4)
     print(f"\nSaved results to {db_path}")
