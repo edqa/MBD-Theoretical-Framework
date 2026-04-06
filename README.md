@@ -11,20 +11,37 @@ pip install mbd-framework
 
 ## Global Command Line Usage
 
-Once installed, the framework registers three native CLI endpoints structurally exposing the Lean arithmetic to immediate processing natively:
+Once installed, the framework registers three native CLI endpoints structurally exposing the Lean arithmetic to immediate computational processing. 
 
-- **1. Atomic Density Bounds Extraction:**
-  Computes the atomic polarizability arrays in the background and sets universal Tkatchenko-Scheffler (TS) scaling parameters.
+### 1. Atomic Density Bounds Extraction (`mbd-compute`)
+Computes the atomic polarizability arrays in the background utilizing PySCF and sets universal Tkatchenko-Scheffler (TS) scaling parameters into a local `database.json`.
+* **Inputs/Arguments:**
+  * `--molecule` : The molecular target string. (Accepts: `Benzene`, `Naphthalene`, `Ice`, `He`, `Ne`, `Xe`).
+  * `--basis` : The explicit Gaussian basis set string (e.g., `aug-cc-pVDZ`, `sto-3g`, `def2-svp`).
+* **Expected Output:** Extracts absolute finite-field Cartesian dipole tensors, bounding them into an exact dimensionless $x$ parameter ($x = V_{\text{Bohr}} / \alpha$).
+* **Example:**
   ```bash
   mbd-compute --molecule Benzene --basis aug-cc-pVDZ
   ```
-- **2. Crystal Dispersion Simulation:**
-  Resolves rigorous 10,000+ atom Cartesian lattice scaling against empirical Pauli Repulsion logic.
+
+### 2. Crystal Dispersion Simulation (`mbd-crystal`)
+Resolves rigorous Cartesian lattice macroscopic dispersion scaling against empirical Pauli Repulsion logic using the $x$ properties computed in `mbd-compute`.
+* **Inputs/Arguments:**
+  * `--target` : The molecular boundary target mapping internally to pre-established coordinate arrays (Accepts: `Benzene`, `Naphthalene`, `Ice`).
+  * `--epsilon` : A continuous float scaling mapping the intrinsic macroscopic uniform dielectric environment (e.g., `1.0` for vacuum, `80.0` for standard water solvents).
+* **Expected Output:** Automatically generates a structurally symmetric `7x7x7` Cartesian atomic lattice array (handling thousands of distinct pairs) and sum-calculates the isotropic dispersion grid ($C_{6} \cdot \varepsilon^{-x} / R^{6}$) against $x$-dielectric quenching bounds yielding `kJ/mol` empirical boundaries.
+* **Example:**
   ```bash
   mbd-crystal --target Benzene --epsilon 1.0
   ```
-- **3. SERS Mathematical Equivalence:**
-  Tests numerical outputs strictly comparing the SERS exponential quenching mapping structurally against the screened MBD interactions.
+
+### 3. SERS Mathematical Equivalence (`mbd-sers`)
+Tests numerical outputs strictly comparing the macroscopic structural SERS exponential quenching envelope structurally against the intrinsic MBD interacting boundaries natively.
+* **Inputs/Arguments:**
+  * `--target` : Your target fractional tracking molecular lattice.
+  * `--epsilon` : Continuous background macroscopic scale bounding variable.
+* **Expected Output:** Emits the SERS analytical quenching envelope $\exp(-\rho)$ mathematically compared to $\varepsilon^{-x}$. Identifies explicitly whether the physical scaling bounds strictly match.
+* **Example:**
   ```bash
   mbd-sers --target Benzene --epsilon 2.0
   ```
