@@ -2,6 +2,33 @@
 
 This repository seamlessly unites **interactive theorem proving in Lean 4** with **first-principles quantum chemistry computations**. It formalizes the fundamental parameterizations governing Many-Body Dispersion (MBD) and the Tkatchenko-Scheffler (TS) screening equations, bridging rigorous geometric mathematics bounding down to operational Python computation models targeting realistic Molecular Crystals.
 
+## Installation
+
+You can globally install the full numerical framework via PyPI:
+```bash
+pip install mbd-framework
+```
+
+## Global Command Line Usage
+
+Once installed, the framework registers three native CLI endpoints structurally exposing the Lean arithmetic to immediate processing natively:
+
+- **1. Atomic Density Bounds Extraction:**
+  Computes the atomic polarizability arrays in the background and sets universal Tkatchenko-Scheffler (TS) scaling parameters.
+  ```bash
+  mbd-compute --molecule Benzene --basis aug-cc-pVDZ
+  ```
+- **2. Crystal Dispersion Simulation:**
+  Resolves rigorous 10,000+ atom Cartesian lattice scaling against empirical Pauli Repulsion logic.
+  ```bash
+  mbd-crystal --target Benzene --epsilon 1.0
+  ```
+- **3. SERS Mathematical Equivalence:**
+  Tests numerical outputs strictly comparing the SERS exponential quenching mapping structurally against the screened MBD interactions.
+  ```bash
+  mbd-sers --target Benzene --epsilon 2.0
+  ```
+
 ## 1. Project Organization
 
 The repository has been structured for academic publication:
@@ -9,12 +36,10 @@ The repository has been structured for academic publication:
 - **`lean/`**
   - **`MBD_Theory.lean`**: Contains the standalone, machine-checked mathematical derivation of the $x = V_{\text{Bohr}} / \alpha$ proportionality limit. Proves that MBD screening establishes a formal mathematical parallel to the SERS exponential quenching envelope $\exp(-\rho)$.
   - **`Molecular_MBD.lean`**: Extends the scalar foundation into explicit geometry matrix evaluations (`Matrix (Fin 3) (Fin 3) ℝ` for anisotropic polarizability) and proves the bounding theorem: `screened_is_bounded_unscreened`, confirming $\varepsilon^{-x} \le 1$.
-- **`src/`**
-  - **`compute_volumes.py`**: A PySCF-based derivation engine. Extracts finite-field polarizability constraints and maps them against the universal Bohr volume ($V_{\text{Bohr}} = 0.62 \text{ \AA}^3$) to emit target boundaries to the `database.json`.
-  - **`screened_mbd.py`**: Framework for testing continuous isotropic interaction pairwise matrices over scaling parameters.
+- **`mbd_framework/`**
+  - **`compute_volumes.py`**: A PySCF-based derivation engine. Extracts finite-field polarizability constraints and maps them against the universal Bohr volume ($V_{\text{Bohr}} = 0.62 \text{ \AA}^3$) to emit target boundaries to the local JSON database.
   - **`crystal_validation.py`**: The atomic grid lattice calculator. Integrates the extracted physics against exact empirical boundaries (e.g., `Pbca` spatial parameters).
-- **`results/`**
-  - Standardized target location for `database.json` and future comparative mappings.
+  - **`sers_unification.py`**: Analytical mapping logic running explicitly exact SERS analytical parameters computationally next to the MBD outputs.
 
 ## 2. Benchmark Computation Outcomes
 
