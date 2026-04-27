@@ -4,9 +4,12 @@ import os
 import copy
 from pyscf import gto, scf
 
-def compute_molecule(name, geometry, basis='sto-3g'):
-    print(f"\n--- Processing {name} ({basis}) ---")
-    mol = gto.M(atom=geometry, basis=basis, verbose=3)
+def compute_molecule(name, geometry, basis='sto-3g', ecp=None):
+    print(f"\n--- Processing {name} ({basis}{', ecp=' + ecp if ecp else ''}) ---")
+    mol_kwargs = dict(atom=geometry, basis=basis, verbose=3)
+    if ecp:
+        mol_kwargs['ecp'] = ecp
+    mol = gto.M(**mol_kwargs)
     
     # 1. SCF Energy
     mf = scf.RHF(mol).run()
@@ -14,25 +17,36 @@ def compute_molecule(name, geometry, basis='sto-3g'):
         print(f"Warning: SCF did not converge for {name}")
     
     # 2. Polarizability Tensor (Finite-Field derivation)
+    # We rebuild a fresh RHF object for each ±field calculation rather than
+    # mutating the converged one. The copy.copy/direct_scf=False pattern fails
+    # on PySCF >= 2.10 because of changes to how _opt is lazily initialized.
     print("Computing Polarizability Tensor (Finite Field)...")
     h1 = mol.intor('int1e_r', comp=3)
-    alpha_tensor = np.zeros((3,3))
+    hcore0 = scf.hf.get_hcore(mol)
+    alpha_tensor = np.zeros((3, 3))
     field = 1e-4
-    hcore = mf.get_hcore()
+
+    def run_with_field(field_vec, dm0):
+        mf_f = scf.RHF(mol)
+        # Override get_hcore to add the dipole perturbation -E . r
+        # (sign convention: H' = -mu . E = +e r . E for electrons)
+        mf_f.get_hcore = lambda *args, **kwargs: (
+            hcore0 + field_vec[0] * h1[0] + field_vec[1] * h1[1] + field_vec[2] * h1[2]
+        )
+        mf_f.verbose = 0
+        # Start from converged unperturbed DM — much faster than atomic guess
+        mf_f.kernel(dm0=dm0)
+        return mf_f.dip_moment(mol, mf_f.make_rdm1(), unit='A.U.', verbose=0)
+
+    dm_ref = mf.make_rdm1()
     for i in range(3):
-        mf_p = copy.copy(mf)
-        mf_p.direct_scf = False
-        mf_p.get_hcore = lambda *args, j=i, hc=hcore: hc + field * h1[j]
-        mf_p.run(verbose=0)
-        dip_p = mf_p.dip_moment(mol, mf_p.make_rdm1(), unit='A.U.', verbose=0)
-        
-        mf_m = copy.copy(mf)
-        mf_m.direct_scf = False
-        mf_m.get_hcore = lambda *args, j=i, hc=hcore: hc - field * h1[j]
-        mf_m.run(verbose=0)
-        dip_m = mf_m.dip_moment(mol, mf_m.make_rdm1(), unit='A.U.', verbose=0)
-        
-        alpha_tensor[i] = (dip_m - dip_p) / (2 * field)
+        e_plus = np.zeros(3); e_plus[i] = +field
+        e_minus = np.zeros(3); e_minus[i] = -field
+        dip_p = run_with_field(e_plus, dm_ref)
+        dip_m = run_with_field(e_minus, dm_ref)
+        # Polarizability: mu_i = alpha_ij * E_j, so induced dipole grows WITH field.
+        # Therefore alpha_ij = (mu(+E) - mu(-E)) / (2*E), NOT (mu(-E) - mu(+E)).
+        alpha_tensor[i] = (dip_p - dip_m) / (2 * field)
         
     alpha_iso = np.trace(alpha_tensor) / 3.0
     print(f"Isotropic Polarizability: {alpha_iso:.4f} a.u.")
@@ -50,8 +64,15 @@ def compute_molecule(name, geometry, basis='sto-3g'):
     print(f"Universal V_Bohr: {V_Bohr_au:.4f} a.u. (~0.62 A^3)")
     
     # Theoretical x = V_Bohr / alpha
-    alpha_eff = max(1e-4, abs(alpha_iso))
-    x = V_Bohr_au / alpha_eff
+    # With the sign convention fixed, alpha_iso must be positive for any
+    # well-behaved closed-shell ground state. Fail loudly if not.
+    if alpha_iso <= 0:
+        raise ValueError(
+            f"Non-physical polarizability for {name}: alpha_iso = {alpha_iso:.4f} a.u. "
+            f"Expected alpha_iso > 0 for a closed-shell ground state. "
+            f"Check basis set, SCF convergence, and finite-field sign convention."
+        )
+    x = V_Bohr_au / alpha_iso
     
     print(f"Computed x = V_Bohr / alpha = {x:.4f}")
     
@@ -117,20 +138,43 @@ def main():
         '''
     }
     
+    db_path = os.path.join(os.getcwd(), "database.json")
+
+    def save_checkpoint():
+        existing = {}
+        if os.path.exists(db_path):
+            try:
+                with open(db_path) as f:
+                    existing = json.load(f)
+            except Exception:
+                existing = {}
+        existing.update(results)
+        with open(db_path, "w") as f:
+            json.dump(existing, f, indent=4)
+
     results = {}
     for name, geo in geometries.items():
         if args.molecule != "all" and name.lower() != args.molecule.lower():
             continue
-        
-        # Safely enforce ECP specifically for massive core elements if generic aug basis requested
-        b = 'def2-svp' if (name == 'Xe' and 'aug' in args.basis.lower()) else args.basis
-        
-        data = compute_molecule(name, geo, basis=b)
-        results[name] = data
 
-    db_path = os.path.join(os.getcwd(), "database.json")
-    with open(db_path, "w") as f:
-        json.dump(results, f, indent=4)
+        # Xe is a 54-electron atom and aug-cc-pVDZ for Xe in PySCF is not the
+        # right reference — it's all-electron and lacks scalar-relativistic
+        # corrections. Use def2-TZVP + matching small-core relativistic ECP.
+        # This substitution is logged so the output is reproducible.
+        ecp = None
+        if name == 'Xe' and 'aug' in args.basis.lower():
+            b = 'def2-tzvp'
+            ecp = 'def2-tzvp'
+            print(f"NOTE: Substituting basis '{args.basis}' -> '{b}' for Xe "
+                  f"(with small-core relativistic ECP '{ecp}').")
+        else:
+            b = args.basis
+
+        data = compute_molecule(name, geo, basis=b, ecp=ecp)
+        results[name] = data
+        save_checkpoint()
+        print(f"Checkpointed {name} to {db_path}")
+
     print(f"\nSaved results to {db_path}")
 
 if __name__ == "__main__":
