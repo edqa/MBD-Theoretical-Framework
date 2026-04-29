@@ -4,7 +4,7 @@ This repository seamlessly unites **interactive theorem proving in Lean 4** with
 
 ## Installation
 
-You can globally install the full numerical framework via PyPI:
+You can globally install the full numerical framework directly from [PyPI (mbd-framework)](https://pypi.org/project/mbd-framework/):
 ```bash
 pip install mbd-framework
 ```
