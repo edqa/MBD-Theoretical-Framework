@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: mbd-framework
-Version: 1.0.0
+Version: 1.0.4
 Summary: A formal validation toolkit calculating Many-Body Dispersion bounds connecting geometric theorems derived in Lean.
 Home-page: https://github.com/edqa/MBD-Theoretical-Framework
 Author: Edwin Maina
@@ -15,6 +15,7 @@ Description-Content-Type: text/markdown
 Requires-Dist: numpy>=1.20.0
 Requires-Dist: scipy>=1.7.0
 Requires-Dist: pyscf>=2.0.0
+Requires-Dist: pyscf-properties>=0.1.0
 Dynamic: author
 Dynamic: classifier
 Dynamic: description
@@ -25,89 +26,60 @@ Dynamic: requires-dist
 Dynamic: requires-python
 Dynamic: summary
 
-# Many-Body Dispersion (MBD) Formalization and Validation
+# MBD Framework: Many-Body Dispersion Computations
 
-This repository seamlessly unites **interactive theorem proving in Lean 4** with **first-principles quantum chemistry computations**. It formalizes the fundamental parameterizations governing Many-Body Dispersion (MBD) and the Tkatchenko-Scheffler (TS) screening equations, bridging rigorous geometric mathematics bounding down to operational Python computation models targeting realistic Molecular Crystals.
+**`mbd-framework`** is a computational toolkit that calculates precise Many-Body Dispersion (MBD) scaling bounds and Tkatchenko-Scheffler (TS) screening parameters. It acts as the numerical bridge between formal mathematical proofs (derived in Lean 4) and first-principles quantum chemistry computations (powered by PySCF).
 
-## Installation
+---
 
-You can globally install the full numerical framework via PyPI:
+## 🚀 Installation
+
+Install the framework globally via PyPI:
+
 ```bash
 pip install mbd-framework
 ```
 
-## Global Command Line Usage
+---
 
-Once installed, the framework registers three native CLI endpoints structurally exposing the Lean arithmetic to immediate computational processing. 
+## 💻 Quick Start & Command Line Tools
 
-### 1. Atomic Density Bounds Extraction (`mbd-compute`)
-Computes the atomic polarizability arrays in the background utilizing PySCF and sets universal Tkatchenko-Scheffler (TS) scaling parameters into a local `database.json`.
-* **Inputs/Arguments:**
-  * `--molecule` : The molecular target string. (Accepts: `Benzene`, `Naphthalene`, `Ice`, `He`, `Ne`, `Xe`).
-  * `--basis` : The explicit Gaussian basis set string (e.g., `aug-cc-pVDZ`, `sto-3g`, `def2-svp`).
-* **Expected Output:** Extracts absolute finite-field Cartesian dipole tensors, bounding them into an exact dimensionless $x$ parameter ($x = V_{\text{Bohr}} / \alpha$).
-* **Example:**
-  ```bash
-  mbd-compute --molecule Benzene --basis aug-cc-pVDZ
-  ```
+Once installed, the framework provides three native command-line tools to instantly run calculations on your molecular targets:
 
-### 2. Crystal Dispersion Simulation (`mbd-crystal`)
-Resolves rigorous Cartesian lattice macroscopic dispersion scaling against empirical Pauli Repulsion logic using the $x$ properties computed in `mbd-compute`.
-* **Inputs/Arguments:**
-  * `--target` : The molecular boundary target mapping internally to pre-established coordinate arrays (Accepts: `Benzene`, `Naphthalene`, `Ice`).
-  * `--epsilon` : A continuous float scaling mapping the intrinsic macroscopic uniform dielectric environment (e.g., `1.0` for vacuum, `80.0` for standard water solvents).
-* **Expected Output:** Automatically generates a structurally symmetric `7x7x7` Cartesian atomic lattice array (handling thousands of distinct pairs) and sum-calculates the isotropic dispersion grid ($C_{6} \cdot \varepsilon^{-x} / R^{6}$) against $x$-dielectric quenching bounds yielding `kJ/mol` empirical boundaries.
-* **Example:**
-  ```bash
-  mbd-crystal --target Benzene --epsilon 1.0
-  ```
+### 1. Extract Atomic Density Bounds (`mbd-compute`)
+Run background PySCF calculations to extract absolute finite-field Cartesian dipole tensors, compute precise atomic polarizabilities ($\alpha$), and map them to the universal TS scaling parameter $x = V_{\text{Bohr}} / \alpha$. The results are safely checkpointed into a local `database.json`.
+
+```bash
+# Example: Extract the bounds for Benzene using the aug-cc-pVDZ basis set
+mbd-compute --molecule Benzene --basis aug-cc-pVDZ
+
+*Note: Cross-validation is on by default. Use `--methods rhf` for HF only, or `--methods rks-pbe,rks-b3lyp` to compare functionals.*
+
+*Supported molecules:* `Benzene`, `Naphthalene`, `He`, `Ne`, `Xe`
+
+### 2. Simulate Crystal Dispersion (`mbd-crystal`)
+Generate a structurally symmetric `7x7x7` Cartesian atomic lattice array (thousands of interacting pairs) to compute the macroscopic isotropic dispersion grid ($C_{6} \cdot \varepsilon^{-x} / R^{6}$) against your extracted bounds, yielding total empirical lattice energies in `kJ/mol`.
+
+```bash
+# Example: Simulate Benzene dispersion scaling in a vacuum (epsilon = 1.0)
+mbd-crystal --target Benzene --epsilon 1.0
+```
 
 ### 3. SERS Mathematical Equivalence (`mbd-sers`)
-Tests numerical outputs strictly comparing the macroscopic structural SERS exponential quenching envelope structurally against the intrinsic MBD interacting boundaries natively.
-* **Inputs/Arguments:**
-  * `--target` : Your target fractional tracking molecular lattice.
-  * `--epsilon` : Continuous background macroscopic scale bounding variable.
-* **Expected Output:** Emits the SERS analytical quenching envelope $\exp(-\rho)$ mathematically compared to $\varepsilon^{-x}$. Identifies explicitly whether the physical scaling bounds strictly match.
-* **Example:**
-  ```bash
-  mbd-sers --target Benzene --epsilon 2.0
-  ```
+A strict numerical checking endpoint that compares the macroscopic structural Surface-Enhanced Raman Scattering (SERS) exponential quenching envelope ($\exp(-\rho)$) against the framework's intrinsic MBD interacting boundaries ($\varepsilon^{-x}$).
 
-## 1. Project Organization
+```bash
+# Example: Test SERS equivalence for Benzene
+mbd-sers --target Benzene --epsilon 2.0
+```
 
-The repository has been structured for academic publication:
+---
 
-- **`lean/`**
-  - **`MBD_Theory.lean`**: Contains the standalone, machine-checked mathematical derivation of the $x = V_{\text{Bohr}} / \alpha$ proportionality limit. Proves that MBD screening establishes a formal mathematical parallel to the SERS exponential quenching envelope $\exp(-\rho)$.
-  - **`Molecular_MBD.lean`**: Extends the scalar foundation into explicit geometry matrix evaluations (`Matrix (Fin 3) (Fin 3) ℝ` for anisotropic polarizability) and proves the bounding theorem: `screened_is_bounded_unscreened`, confirming $\varepsilon^{-x} \le 1$.
-- **`mbd_framework/`**
-  - **`compute_volumes.py`**: A PySCF-based derivation engine. Extracts finite-field polarizability constraints and maps them against the universal Bohr volume ($V_{\text{Bohr}} = 0.62 \text{ \AA}^3$) to emit target boundaries to the local JSON database.
-  - **`crystal_validation.py`**: The atomic grid lattice calculator. Integrates the extracted physics against exact empirical boundaries (e.g., `Pbca` spatial parameters).
-  - **`sers_unification.py`**: Analytical mapping logic running explicitly exact SERS analytical parameters computationally next to the MBD outputs.
+## 🛠 Features at a Glance
+- **Strictly Typed Physics**: Detects and corrects SCF convergence to saddle points via Pople stability iteration before computing properties.
+- **Automated Checkpointing**: Computations automatically stack results into a local `database.json` to prevent losing time-intensive finite-field SCF runs.
+- **Seamless Academic Pipeline**: Numerically validates mathematical limit theorems bounding dispersion properties for large-scale Molecular Crystals.
 
-## 2. Benchmark Computation Outcomes
+---
 
-The computation validation matched the formal bounds dictated mathematically inside the Lean engine. 
-Using `aug-cc-pVDZ` configurations to precisely calculate static polarizabilities against the unified $0.62 \text{ \AA}^3$ scaling benchmark:
-
-### A. The Baseline $x$ Ratios:
-As validated by TS empirical standards, strongly-bound electron systems assert heavier screening constraints (due to comparatively smaller polarizabilities), whilst diffuse atoms assert minimal screening:
-- **Helium ($He$)**: $x = 3.26$ (Strong Screening / Tightly Bound).
-- **Neon ($Ne$)**: $x = 2.31$ 
-- **Water ($H_{2}O$)**: $x = 0.52$ 
-- **Xenon ($Xe$)**: $x = 0.32$ (Weak Screening / Diffuse Bound).
-
-### B. The Benzene Macroscopic Crystal Check:
-Evaluating the extracted Benzene matrix bounds ($x \approx 0.061$) natively against actual macroscopic atomic configurations yielded results consistent with expectations:
-- Over **1,372** interacting molecular lattices.
-- Over **16,000+** structurally mapped Atomic Pairs computationally summed via $C_{6}^{ab} \cdot \varepsilon^{-x} / R_{ab}^{6}$.
-- Resulted in raw dispersion interaction potentials capturing **-131.99 kJ/mol** of empirical unit-cell energy. 
-When modeled against bulk electrostatic potentials and heavy space-packing Pauli repulsion constraints, this raw dispersive baseline aligns closely with the net sublimation boundary (-184 kJ/mol).
-
-## 3. Future Production Scaling 
-
-### Immediate Scaling Goals:
-1. **Repository Generation:** Formally sync the established `MBD-Framework` configuration tree via Github targeting formal academic dissemination.
-2. **Naphthalene & Anisotropic Crystals:** Utilizing explicit diagonal matrices to track anisotropic sliding-plane dispersions missing in isotropic Benzene matrices.
-3. **Hydrogen Bonding Metrics (Ice Ih):** Running calculations against heavily polarized arrays tracking collective behavior.
-4. **Finalizing The Unification:** Linking the finalized Lean SERS exponential matrices natively into the resulting atomic computational outputs (publishing the explicit SERS-to-MBD theorem).
+*For detailed physics explanations, API structures, and Lean 4 formal mathematical proofs, please visit the main academic repository at [GitHub: MBD-Theoretical-Framework](https://github.com/edqa/MBD-Theoretical-Framework).*

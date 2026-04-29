@@ -3,10 +3,36 @@ import math
 import os
 import argparse
 
+def resolve_x(data, method=None):
+    """Read x from a database entry, supporting both old (flat) and new
+    (method-nested) schemas. See crystal_validation.resolve_x for details."""
+    if method:
+        key = method.replace('-', '_').lower()
+        if key not in data:
+            available = [k for k in ('rhf', 'rks_pbe', 'rks_b3lyp') if k in data]
+            raise KeyError(
+                f"Method '{method}' not in database entry. "
+                f"Available: {available}. Re-run mbd-compute with --methods {method}."
+            )
+        return data[key]["x"], key
+    for k in ('rhf', 'rks_pbe', 'rks_b3lyp'):
+        if k in data and isinstance(data[k], dict) and 'x' in data[k]:
+            return data[k]["x"], k
+    if 'x' in data:
+        return data["x"], "legacy"
+    raise KeyError(
+        "Database entry has no x value in any known schema. "
+        "Re-run mbd-compute to populate it."
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description="Evaluate the SERS analytical connection computationally.")
     parser.add_argument("--epsilon", type=float, default=2.0, help="Bulk Dielectric Constant of embedding medium")
     parser.add_argument("--target", type=str, default="Benzene", help="Target Molecule to compute (Benzene, Naphthalene, Ice)")
+    parser.add_argument("--method", type=str, default=None,
+                        help="Which method's x to use: rhf, rks-pbe, rks-b3lyp. "
+                             "Default: auto (prefers rhf if present).")
     args = parser.parse_args()
 
     db_path = os.path.join(os.getcwd(), "database.json")
@@ -25,7 +51,7 @@ def main():
         return
         
     data = db[molecule_key]
-    x_mol = data["x"]
+    x_mol, method_used = resolve_x(data, method=args.method)
     
     # MBD Screening Formulation
     mbd_screening = math.pow(args.epsilon, -x_mol)
@@ -35,7 +61,7 @@ def main():
     sers_quenching = math.exp(-rho)
     
     print(f"--- SERS-MBD Unification: {args.target} ---")
-    print(f"Universal Screening Limit (x) = {x_mol:.4f}")
+    print(f"Universal Screening Limit (x) = {x_mol:.4f}  (method: {method_used})")
     print(f"Dielectric Environment (ε)    = {args.epsilon:.4f}")
     print("\n--- Analytical Comparison ---")
     print(f"MBD Structural Screening (ε^-x):         {mbd_screening:.6f}")

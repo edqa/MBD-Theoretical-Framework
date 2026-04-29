@@ -104,10 +104,46 @@ def compute_lattice_energy(origin_mol, lattice_molecules, x_mol, epsilon=1.0):
     e_lattice_kjmol = (total_energy_au / 2.0) * hartree_to_kjmol
     return e_lattice_kjmol
 
+def resolve_x(data, method=None):
+    """Read x from a database entry, supporting both old (flat) and new
+    (method-nested) schemas.
+
+    Old schema:  {"x": 0.5, "alpha_iso": ..., ...}
+    New schema:  {"rhf": {"x": 0.5, ...}, "rks_pbe": {"x": 0.4, ...}, ...}
+
+    If method is given, returns x from that method's sub-record (raises if
+    the method isn't in the entry). If method is None, prefers RHF, then
+    RKS/PBE, then RKS/B3LYP, then a flat top-level x.
+    """
+    if method:
+        key = method.replace('-', '_').lower()
+        if key not in data:
+            available = [k for k in ('rhf', 'rks_pbe', 'rks_b3lyp') if k in data]
+            raise KeyError(
+                f"Method '{method}' not in database entry. "
+                f"Available: {available}. Re-run mbd-compute with --methods {method}."
+            )
+        return data[key]["x"], key
+    # Auto-resolve preference order.
+    for k in ('rhf', 'rks_pbe', 'rks_b3lyp'):
+        if k in data and isinstance(data[k], dict) and 'x' in data[k]:
+            return data[k]["x"], k
+    # Legacy flat schema fallback.
+    if 'x' in data:
+        return data["x"], "legacy"
+    raise KeyError(
+        "Database entry has no x value in any known schema. "
+        "Re-run mbd-compute to populate it."
+    )
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--epsilon", type=float, default=1.0, help="Bulk Dielectric Constant")
     parser.add_argument("--target", type=str, default="Benzene", help="Target Molecule to compute (Benzene, Naphthalene, Ice)")
+    parser.add_argument("--method", type=str, default=None,
+                        help="Which method's x to use: rhf, rks-pbe, rks-b3lyp. "
+                             "Default: auto (prefers rhf if present).")
     args = parser.parse_args()
 
     db_path = os.path.join(os.getcwd(), "database.json")
@@ -125,10 +161,10 @@ def main():
         return
         
     data = db[molecule_key]
-    x_mol = data["x"]
+    x_mol, method_used = resolve_x(data, method=args.method)
     
     print(f"--- {args.target} Molecular Crystal Proxy ---")
-    print(f"Computed intrinsic screening limit x = {x_mol:.4f}")
+    print(f"Computed intrinsic screening limit x = {x_mol:.4f}  (method: {method_used})")
     
     print(f"\nBuilding 7x7x7 atomic proxy lattice for {args.target}...")
     origin_mol, lattice_molecules = build_atomic_lattice(molecule=args.target, supercell=3)

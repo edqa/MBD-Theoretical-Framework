@@ -16,13 +16,14 @@ Once installed, the framework registers three native CLI endpoints structurally 
 ### 1. Atomic Density Bounds Extraction (`mbd-compute`)
 Computes the atomic polarizability arrays in the background utilizing PySCF and sets universal Tkatchenko-Scheffler (TS) scaling parameters into a local `database.json`.
 * **Inputs/Arguments:**
-  * `--molecule` : The molecular target string. (Accepts: `Benzene`, `Naphthalene`, `Ice`, `He`, `Ne`, `Xe`).
+  * `--molecule` : The molecular target string. (Accepts: `Benzene`, `Naphthalene`, `He`, `Ne`, `Xe`).
   * `--basis` : The explicit Gaussian basis set string (e.g., `aug-cc-pVDZ`, `sto-3g`, `def2-svp`).
 * **Expected Output:** Extracts absolute finite-field Cartesian dipole tensors, bounding them into an exact dimensionless $x$ parameter ($x = V_{\text{Bohr}} / \alpha$).
 * **Example:**
   ```bash
   mbd-compute --molecule Benzene --basis aug-cc-pVDZ
   ```
+  *Note: Cross-validation is on by default. Use `--methods rhf` for HF only, or `--methods rks-pbe,rks-b3lyp` to compare functionals.*
 
 ### 2. Crystal Dispersion Simulation (`mbd-crystal`)
 Resolves rigorous Cartesian lattice macroscopic dispersion scaling against empirical Pauli Repulsion logic using the $x$ properties computed in `mbd-compute`.

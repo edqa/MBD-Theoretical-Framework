@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mbd-framework",
-    version="1.0.3",
+    version="1.0.4",
     description="A formal validation toolkit calculating Many-Body Dispersion bounds connecting geometric theorems derived in Lean.",
     long_description=open("README_PyPI.md").read(),
     long_description_content_type="text/markdown",

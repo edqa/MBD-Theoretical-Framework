@@ -24,8 +24,10 @@ Run background PySCF calculations to extract absolute finite-field Cartesian dip
 ```bash
 # Example: Extract the bounds for Benzene using the aug-cc-pVDZ basis set
 mbd-compute --molecule Benzene --basis aug-cc-pVDZ
-```
-*Supported molecules:* `Benzene`, `Naphthalene`, `Ice`, `He`, `Ne`, `Xe`
+
+*Note: Cross-validation is on by default. Use `--methods rhf` for HF only, or `--methods rks-pbe,rks-b3lyp` to compare functionals.*
+
+*Supported molecules:* `Benzene`, `Naphthalene`, `He`, `Ne`, `Xe`
 
 ### 2. Simulate Crystal Dispersion (`mbd-crystal`)
 Generate a structurally symmetric `7x7x7` Cartesian atomic lattice array (thousands of interacting pairs) to compute the macroscopic isotropic dispersion grid ($C_{6} \cdot \varepsilon^{-x} / R^{6}$) against your extracted bounds, yielding total empirical lattice energies in `kJ/mol`.
@@ -46,7 +48,7 @@ mbd-sers --target Benzene --epsilon 2.0
 ---
 
 ## 🛠 Features at a Glance
-- **Strictly Typed Physics**: The extraction pipeline explicitly intercepts non-converged PySCF Hartree-Fock instabilities, ensuring only physically valid, positive $\alpha$ states pass through.
+- **Strictly Typed Physics**: Detects and corrects SCF convergence to saddle points via Pople stability iteration before computing properties.
 - **Automated Checkpointing**: Computations automatically stack results into a local `database.json` to prevent losing time-intensive finite-field SCF runs.
 - **Seamless Academic Pipeline**: Numerically validates mathematical limit theorems bounding dispersion properties for large-scale Molecular Crystals.
 
