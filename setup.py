@@ -2,9 +2,9 @@ from setuptools import setup, find_packages
 
 setup(
     name="mbd-framework",
-    version="1.0.1",
+    version="1.0.3",
     description="A formal validation toolkit calculating Many-Body Dispersion bounds connecting geometric theorems derived in Lean.",
-    long_description=open("README.md").read(),
+    long_description=open("README_PyPI.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/edqa/MBD-Theoretical-Framework",
     author="Edwin Maina",
@@ -14,6 +14,7 @@ setup(
         "numpy>=1.20.0",
         "scipy>=1.7.0",
         "pyscf>=2.0.0",
+        "pyscf-properties>=0.1.0",
     ],
     entry_points={
         "console_scripts": [
