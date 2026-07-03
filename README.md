@@ -81,7 +81,6 @@ When modeled against bulk electrostatic potentials and heavy space-packing Pauli
 ## 3. Future Production Scaling 
 
 ### Immediate Scaling Goals:
-1. **Repository Generation:** Formally sync the established `MBD-Framework` configuration tree via Github targeting formal academic dissemination.
-2. **Naphthalene & Anisotropic Crystals:** Utilizing explicit diagonal matrices to track anisotropic sliding-plane dispersions missing in isotropic Benzene matrices.
-3. **Hydrogen Bonding Metrics (Ice Ih):** Running calculations against heavily polarized arrays tracking collective behavior.
-4. **Finalizing The Unification:** Linking the finalized Lean SERS exponential matrices natively into the resulting atomic computational outputs (publishing the explicit SERS-to-MBD theorem).
+1. **Naphthalene & Anisotropic Crystals:** Utilizing explicit diagonal matrices to track anisotropic sliding-plane dispersions missing in isotropic Benzene matrices.
+2. **Hydrogen Bonding Metrics (Ice Ih):** Running calculations against heavily polarized arrays tracking collective behavior.
+3. **Finalizing The Unification:** Linking the finalized Lean SERS exponential matrices natively into the resulting atomic computational outputs (publishing the explicit SERS-to-MBD theorem).
